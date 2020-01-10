@@ -533,6 +533,35 @@ func (rn *RNode) Field(field string) *MapNode {
 	return nil
 }
 
+// DeepField looks for field recusively in a MappingNode, returning the path
+// and fieldName/fieldValue pair of the first (most shallow) field found. The
+// returned path's last element is always the field itself. Returns a nil
+// *MapNode for non-MappingNodes or if field is not found. Only traverses
+// MappingNodes.
+func (rn *RNode) DeepField(field string) ([]string, *MapNode) {
+	if rn.YNode().Kind != yaml.MappingNode {
+		return []string{}, nil
+	}
+
+	mn := rn.Field(field)
+	if mn != nil {
+		return []string{field}, mn
+	}
+
+	path := []string{}
+	for i := 0; i < len(rn.Content()); i = IncrementFieldIndex(i) {
+		key := rn.Content()[i].Value
+		nested := rn.Field(key)
+		var nPath []string
+		nPath, mn = nested.Value.DeepField(field)
+		if mn != nil {
+			path = append(path, append([]string{key}, nPath...)...)
+			break
+		}
+	}
+	return path, mn
+}
+
 // VisitFields calls fn for each field in the RNode.
 // Returns an error for non-MappingNodes.
 func (rn *RNode) VisitFields(fn func(node *MapNode) error) error {
