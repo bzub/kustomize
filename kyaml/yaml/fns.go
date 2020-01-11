@@ -206,7 +206,7 @@ func (e ElementMatcher) Filter(rn *RNode) (*RNode, error) {
 		// cast the entry to a RNode so we can operate on it
 		elem := NewRNode(rn.Content()[i])
 
-		field, err := elem.Pipe(MatchField(e.FieldName, e.FieldValue))
+		field, err := elem.Pipe(MatchDeepField(e.FieldName, e.FieldValue))
 		if IsFoundOrError(field, err) {
 			return elem, err
 		}
@@ -226,6 +226,10 @@ func Get(name string) FieldMatcher {
 
 func MatchField(name, value string) FieldMatcher {
 	return FieldMatcher{Name: name, Value: NewScalarRNode(value)}
+}
+
+func MatchDeepField(name, value string) FieldMatcher {
+	return FieldMatcher{Name: name, Value: NewScalarRNode(value), Recursive: true}
 }
 
 func Match(value string) FieldMatcher {
@@ -250,6 +254,9 @@ type FieldMatcher struct {
 	// Create will cause the field to be created with this value
 	// if it is set.
 	Create *RNode `yaml:"create,omitempty"`
+
+	// Recursive searches for the field recursively through MappingNodes.
+	Recursive bool `yaml:"recursive,omitempty"`
 }
 
 func (f FieldMatcher) Filter(rn *RNode) (*RNode, error) {
@@ -288,13 +295,17 @@ func (f FieldMatcher) Filter(rn *RNode) (*RNode, error) {
 		return nil, err
 	}
 
-	for i := 0; i < len(rn.Content()); i = IncrementFieldIndex(i) {
-		isMatchingField := rn.Content()[i].Value == f.Name
-		if isMatchingField {
-			requireMatchFieldValue := f.Value != nil
-			if !requireMatchFieldValue || rn.Content()[i+1].Value == f.Value.YNode().Value {
-				return NewRNode(rn.Content()[i+1]), nil
-			}
+	path, matchingField := rn.DeepField(f.Name)
+	if len(path) > 1 && !f.Recursive {
+		return nil, nil
+	}
+
+	isMatchingField := matchingField != nil
+	if isMatchingField {
+		requireMatchFieldValue := f.Value != nil
+		if !requireMatchFieldValue ||
+			matchingField.Value.Document().Value == f.Value.YNode().Value {
+			return matchingField.Value, nil
 		}
 	}
 

@@ -533,12 +533,12 @@ func (rn *RNode) Field(field string) *MapNode {
 	return nil
 }
 
-// deepField looks for field recusively in a MappingNode, returning the path
+// DeepField looks for field recusively in a MappingNode, returning the path
 // and fieldName/fieldValue pair of the first (most shallow) field found. The
 // returned path's last element is always the field itself. Returns a nil
 // *MapNode for non-MappingNodes or if field is not found. Only traverses
 // MappingNodes.
-func (rn *RNode) deepField(field string) ([]string, *MapNode) {
+func (rn *RNode) DeepField(field string) ([]string, *MapNode) {
 	if rn.YNode().Kind != yaml.MappingNode {
 		return []string{}, nil
 	}
@@ -553,7 +553,7 @@ func (rn *RNode) deepField(field string) ([]string, *MapNode) {
 		key := rn.Content()[i].Value
 		nested := rn.Field(key)
 		var nPath []string
-		nPath, mn = nested.Value.deepField(field)
+		nPath, mn = nested.Value.DeepField(field)
 		if mn != nil {
 			path = append(path, append([]string{key}, nPath...)...)
 			break
@@ -602,7 +602,7 @@ func (rn *RNode) ElementValues(key string) ([]string, error) {
 	}
 	var elements []string
 	for i := 0; i < len(rn.Content()); i++ {
-		field := NewRNode(rn.Content()[i]).Field(key)
+		_, field := NewRNode(rn.Content()[i]).DeepField(key)
 		if !IsFieldEmpty(field) {
 			elements = append(elements, field.Value.YNode().Value)
 		}
@@ -687,7 +687,7 @@ func checkKey(key string, elems []*Node) bool {
 	paths := [][]string{}
 	for i := range elems {
 		elem := NewRNode(elems[i])
-		path, mn := elem.deepField(key)
+		path, mn := elem.DeepField(key)
 		if mn != nil {
 			count++
 			paths = append(paths, path)

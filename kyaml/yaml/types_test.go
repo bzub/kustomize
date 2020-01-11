@@ -48,8 +48,8 @@ spec:
 	}
 }
 
-// Test that deepField detects nested fields.
-func TestRNode_deepField(t *testing.T) {
+// Test that DeepField detects nested fields.
+func TestRNode_DeepField(t *testing.T) {
 	deploy, err := Parse(`apiVersion: apps/v1
 kind: Deployment
 map:
@@ -59,7 +59,7 @@ map:
 		t.FailNow()
 	}
 
-	path, name := deploy.deepField("name")
+	path, name := deploy.DeepField("name")
 
 	expectedPath := []string{"map", "name"}
 	if !assert.Equal(t, expectedPath, path) {
@@ -78,8 +78,8 @@ map:
 	}
 }
 
-// Test that deepField returns empty path, nil when field is not found.
-func TestRNode_deepField_NotFound(t *testing.T) {
+// Test that DeepField returns empty path, nil when field is not found.
+func TestRNode_DeepField_NotFound(t *testing.T) {
 	deploy, err := Parse(`apiVersion: apps/v1
 kind: Deployment
 map:
@@ -89,7 +89,7 @@ map:
 		t.FailNow()
 	}
 
-	path, name := deploy.deepField("name")
+	path, name := deploy.DeepField("name")
 
 	if !assert.Len(t, path, 0) {
 		t.FailNow()
@@ -100,8 +100,8 @@ map:
 	}
 }
 
-// Test that deepField does not traverse non-MappingNode(s).
-func TestRNode_deepField_NonMappingNodes(t *testing.T) {
+// Test that DeepField does not traverse non-MappingNode(s).
+func TestRNode_DeepField_NonMappingNodes(t *testing.T) {
 	deploy, err := Parse(`apiVersion: apps/v1
 kind: Deployment
 map:
@@ -112,7 +112,7 @@ map:
 		t.FailNow()
 	}
 
-	path, name := deploy.deepField("name")
+	path, name := deploy.DeepField("name")
 
 	if !assert.Len(t, path, 0) {
 		t.FailNow()

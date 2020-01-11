@@ -251,6 +251,29 @@ items:
 kind: Deployment
 `,
 	},
+	{`nested associative -- modify element`,
+		`
+kind: Deployment
+items:
+- configMap:
+    name: source1
+    optional: true
+`,
+		`
+kind: Deployment
+items:
+- configMap:
+    name: source1
+    optional: false
+`,
+		`
+kind: Deployment
+items:
+- configMap:
+    name: source1
+    optional: true
+`,
+	},
 	{`nested associative -- add element`,
 		`
 kind: Deployment
