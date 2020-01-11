@@ -251,4 +251,103 @@ items:
 kind: Deployment
 `,
 	},
+	{`nested associative -- add element`,
+		`
+kind: Deployment
+items:
+- configMap:
+    name: source2
+    optional: true
+`,
+		`
+kind: Deployment
+items:
+- configMap:
+    name: source1
+    optional: false
+`,
+		`
+kind: Deployment
+items:
+- configMap:
+    name: source1
+    optional: false
+- configMap:
+    name: source2
+    optional: true
+`,
+	},
+	{`nested associative -- add same name, different path`,
+		`
+kind: Deployment
+volumes:
+- name: vol1
+  projected:
+    sources:
+    - secret:
+        name: source1
+        optional: false
+`,
+		`
+kind: Deployment
+volumes:
+- name: vol1
+  projected:
+    sources:
+    - configMap:
+        name: source1
+        optional: false
+`,
+		`
+kind: Deployment
+volumes:
+- name: vol1
+  projected:
+    sources:
+    - configMap:
+        name: source1
+        optional: false
+    - secret:
+        name: source1
+        optional: false
+`,
+	},
+	{`nested associative -- modify same name, different path`,
+		`
+kind: Deployment
+volumes:
+- name: vol1
+  projected:
+    sources:
+    - secret:
+        name: source1
+        optional: true
+`,
+		`
+kind: Deployment
+volumes:
+- name: vol1
+  projected:
+    sources:
+    - configMap:
+        name: source1
+        optional: false
+    - secret:
+        name: source1
+        optional: false
+`,
+		`
+kind: Deployment
+volumes:
+- name: vol1
+  projected:
+    sources:
+    - configMap:
+        name: source1
+        optional: false
+    - secret:
+        name: source1
+        optional: true
+`,
+	},
 }

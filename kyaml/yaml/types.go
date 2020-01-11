@@ -533,12 +533,12 @@ func (rn *RNode) Field(field string) *MapNode {
 	return nil
 }
 
-// DeepField looks for field recusively in a MappingNode, returning the path
+// deepField looks for field recusively in a MappingNode, returning the path
 // and fieldName/fieldValue pair of the first (most shallow) field found. The
 // returned path's last element is always the field itself. Returns a nil
 // *MapNode for non-MappingNodes or if field is not found. Only traverses
 // MappingNodes.
-func (rn *RNode) DeepField(field string) ([]string, *MapNode) {
+func (rn *RNode) deepField(field string) ([]string, *MapNode) {
 	if rn.YNode().Kind != yaml.MappingNode {
 		return []string{}, nil
 	}
@@ -553,7 +553,7 @@ func (rn *RNode) DeepField(field string) ([]string, *MapNode) {
 		key := rn.Content()[i].Value
 		nested := rn.Field(key)
 		var nPath []string
-		nPath, mn = nested.Value.DeepField(field)
+		nPath, mn = nested.Value.deepField(field)
 		if mn != nil {
 			path = append(path, append([]string{key}, nPath...)...)
 			break
@@ -684,11 +684,28 @@ func (rn *RNode) GetAssociativeKey() string {
 // checkKey returns true if all elems have the key
 func checkKey(key string, elems []*Node) bool {
 	count := 0
+	paths := [][]string{}
 	for i := range elems {
 		elem := NewRNode(elems[i])
-		if elem.Field(key) != nil {
+		path, mn := elem.deepField(key)
+		if mn != nil {
 			count++
+			paths = append(paths, path)
 		}
 	}
-	return count == len(elems)
+
+	// Make sure all elems have the key.
+	if count != len(elems) {
+		return false
+	}
+
+	// Make sure key paths have the same depth.
+	depth := len(paths[0])
+	for i := range paths {
+		if len(paths[i]) != depth {
+			return false
+		}
+	}
+
+	return true
 }
